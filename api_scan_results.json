@@ -1,0 +1,22 @@
+{
+  "base_urls": {
+    "https://ydaj.10086.cn": {
+      "status": null,
+      "accessible": false
+    },
+    "https://ydaj.cn": {
+      "status": null,
+      "accessible": false
+    },
+    "https://home.10086.cn": {
+      "status": null,
+      "accessible": false
+    },
+    "https://api.ydaj.10086.cn": {
+      "status": null,
+      "accessible": false
+    }
+  },
+  "login_endpoints": [],
+  "discoveries": []
+}

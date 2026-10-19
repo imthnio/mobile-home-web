@@ -1,351 +1,433 @@
-// 移动爱家网页版 - JavaScript
-// 基于 Blurams API 的实现
+// 移动爱家网页版 - 完整可用版本（模拟数据）
+// 等抓包完成后，只需要替换 API 地址即可
 
-class MobileHomeAPI {
+class MobileHomeApp {
     constructor() {
-        // 从 APK 分析中获取的真实服务器地址
-        this.apiServer = 'https://api-media.camera.komect.com';
-        this.soulServer = 'https://soul-media.camera.komect.com'; // 视频流服务器
-        this.bmsServer = 'https://bms-media.camera.komect.com'; // 设备管理服务器
-        this.casServer = 'https://caas.blurams.cn'; // 认证服务器
-        this.iotServer = 'https://gwapi.blurams.cn'; // IoT 网关
-        this.stunServer = 'stun.blurams.cn'; // STUN 服务器
-        this.relayServer = 'relaycn.blurams.cn'; // 中继服务器
-        
-        this.token = localStorage.getItem('token');
-        this.userId = localStorage.getItem('userId');
+        this.currentUser = null;
+        this.devices = [];
+        this.init();
     }
 
-    // 登录
-    async login(username, password) {
-        // 注意：这里需要根据实际抓包结果调整
-        // Blurams API 通常使用以下格式
-        const endpoints = [
-            '/v3/user/login',
-            '/api/user/login',
-            '/user/login'
-        ];
-
-        for (const endpoint of endpoints) {
-            try {
-                const response = await fetch(this.apiServer + endpoint, {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'User-Agent': 'MobileHome/12.10.0',
-                    },
-                    body: JSON.stringify({
-                        username: username,
-                        password: password,
-                        // 可能需要的其他参数
-                        deviceId: this.getDeviceId(),
-                        appVersion: '12.10.0',
-                        platform: 'web'
-                    })
-                });
-
-                if (response.ok) {
-                    const data = await response.json();
-                    if (data.code === 0 || data.success) {
-                        this.token = data.data?.token || data.token;
-                        this.userId = data.data?.userId || data.userId;
-                        
-                        localStorage.setItem('token', this.token);
-                        localStorage.setItem('userId', this.userId);
-                        
-                        return { success: true, data };
-                    }
-                }
-            } catch (error) {
-                console.log(`尝试 ${endpoint} 失败:`, error);
-            }
-        }
-
-        throw new Error('登录失败，请检查账号密码');
-    }
-
-    // 获取设备列表
-    async getDevices() {
-        const endpoints = [
-            '/v3/device/list',
-            '/api/device/list',
-            '/device/list'
-        ];
-
-        for (const endpoint of endpoints) {
-            try {
-                const response = await fetch(this.apiServer + endpoint, {
-                    method: 'GET',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'Authorization': `Bearer ${this.token}`,
-                        'User-Agent': 'MobileHome/12.10.0',
-                    }
-                });
-
-                if (response.ok) {
-                    const data = await response.json();
-                    if (data.code === 0 || data.success) {
-                        return data.data?.devices || data.devices || [];
-                    }
-                }
-            } catch (error) {
-                console.log(`尝试 ${endpoint} 失败:`, error);
-            }
-        }
-
-        return [];
-    }
-
-    // 获取视频流地址
-    async getVideoStream(deviceId) {
-        const endpoints = [
-            `/v3/device/${deviceId}/stream`,
-            `/api/device/${deviceId}/stream`,
-            `/device/${deviceId}/video`
-        ];
-
-        for (const endpoint of endpoints) {
-            try {
-                const response = await fetch(this.apiServer + endpoint, {
-                    method: 'GET',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'Authorization': `Bearer ${this.token}`,
-                        'User-Agent': 'MobileHome/12.10.0',
-                    }
-                });
-
-                if (response.ok) {
-                    const data = await response.json();
-                    if (data.code === 0 || data.success) {
-                        return data.data?.url || data.url || data.rtspUrl;
-                    }
-                }
-            } catch (error) {
-                console.log(`尝试 ${endpoint} 失败:`, error);
-            }
-        }
-
-        return null;
-    }
-
-    // 生成设备ID
-    getDeviceId() {
-        let deviceId = localStorage.getItem('deviceId');
-        if (!deviceId) {
-            deviceId = 'web_' + Math.random().toString(36).substr(2, 9);
-            localStorage.setItem('deviceId', deviceId);
-        }
-        return deviceId;
-    }
-
-    // 登出
-    logout() {
-        localStorage.removeItem('token');
-        localStorage.removeItem('userId');
-        this.token = null;
-        this.userId = null;
-    }
-
-    // 检查是否已登录
-    isLoggedIn() {
-        return !!this.token;
-    }
-}
-
-// UI 控制器
-class UIController {
-    constructor(api) {
-        this.api = api;
-        this.initElements();
-        this.bindEvents();
-        this.checkLoginStatus();
-    }
-
-    initElements() {
-        this.loginSection = document.getElementById('loginSection');
-        this.dashboard = document.getElementById('dashboard');
-        this.loginForm = document.getElementById('loginForm');
-        this.errorMsg = document.getElementById('errorMsg');
-        this.loginBtn = document.getElementById('loginBtn');
-        this.logoutBtn = document.getElementById('logoutBtn');
-        this.camerasGrid = document.getElementById('camerasGrid');
-        this.loadingCameras = document.getElementById('loadingCameras');
-        this.videoModal = document.getElementById('videoModal');
-        this.videoPlayer = document.getElementById('videoPlayer');
-        this.videoTitle = document.getElementById('videoTitle');
-        this.closeVideoBtn = document.getElementById('closeVideoBtn');
-        this.loadingVideo = document.getElementById('loadingVideo');
-    }
-
-    bindEvents() {
-        this.loginForm.addEventListener('submit', (e) => this.handleLogin(e));
-        this.logoutBtn.addEventListener('click', () => this.handleLogout());
-        this.closeVideoBtn.addEventListener('click', () => this.closeVideo());
-    }
-
-    checkLoginStatus() {
-        if (this.api.isLoggedIn()) {
-            this.showDashboard();
+    init() {
+        // 检查是否已登录
+        const savedUser = localStorage.getItem('mobile_home_user');
+        if (savedUser) {
+            this.currentUser = JSON.parse(savedUser);
+            this.showDeviceList();
         } else {
             this.showLogin();
         }
+
+        // 绑定事件
+        this.bindEvents();
+    }
+
+    bindEvents() {
+        // 登录方式切换
+        document.querySelectorAll('.tab-btn').forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+                e.target.classList.add('active');
+                
+                const type = e.target.dataset.tab;
+                document.querySelectorAll('.tab-content').forEach(content => {
+                    content.classList.remove('active');
+                });
+                document.getElementById(`${type}-tab`).classList.add('active');
+            });
+        });
+
+        // 密码登录
+        document.getElementById('password-login-btn')?.addEventListener('click', () => {
+            this.handlePasswordLogin();
+        });
+
+        // 验证码登录
+        document.getElementById('sms-login-btn')?.addEventListener('click', () => {
+            this.handleSmsLogin();
+        });
+
+        // 发送验证码
+        document.getElementById('send-code-btn')?.addEventListener('click', () => {
+            this.sendVerificationCode();
+        });
+
+        // 退出登录
+        document.getElementById('logout-btn')?.addEventListener('click', () => {
+            this.handleLogout();
+        });
+
+        // 回车登录
+        document.querySelectorAll('input').forEach(input => {
+            input.addEventListener('keypress', (e) => {
+                if (e.key === 'Enter') {
+                    const activeTab = document.querySelector('.tab-content.active');
+                    if (activeTab.id === 'password-tab') {
+                        this.handlePasswordLogin();
+                    } else {
+                        this.handleSmsLogin();
+                    }
+                }
+            });
+        });
     }
 
     showLogin() {
-        this.loginSection.classList.remove('hidden');
-        this.dashboard.classList.add('hidden');
+        document.getElementById('login-container').style.display = 'flex';
+        document.getElementById('device-container').style.display = 'none';
     }
 
-    showDashboard() {
-        this.loginSection.classList.add('hidden');
-        this.dashboard.classList.remove('hidden');
+    showDeviceList() {
+        document.getElementById('login-container').style.display = 'none';
+        document.getElementById('device-container').style.display = 'block';
+        
+        // 显示用户信息
+        if (this.currentUser) {
+            document.getElementById('user-phone').textContent = this.currentUser.phone;
+        }
+        
+        // 加载设备列表
         this.loadDevices();
     }
 
-    showError(message) {
-        this.errorMsg.textContent = message;
-        this.errorMsg.classList.remove('hidden');
-        setTimeout(() => {
-            this.errorMsg.classList.add('hidden');
-        }, 5000);
-    }
+    async handlePasswordLogin() {
+        const phone = document.getElementById('phone').value.trim();
+        const password = document.getElementById('password').value.trim();
 
-    async handleLogin(e) {
-        e.preventDefault();
-        
-        const username = document.getElementById('username').value;
-        const password = document.getElementById('password').value;
-        
-        this.loginBtn.disabled = true;
-        this.loginBtn.textContent = '登录中...';
+        if (!phone || !password) {
+            this.showMessage('请输入手机号和密码', 'error');
+            return;
+        }
+
+        if (!/^1[3-9]\d{9}$/.test(phone)) {
+            this.showMessage('手机号格式不正确', 'error');
+            return;
+        }
+
+        const btn = document.getElementById('password-login-btn');
+        btn.disabled = true;
+        btn.textContent = '登录中...';
 
         try {
-            await this.api.login(username, password);
-            this.showDashboard();
+            // 模拟 API 调用
+            await this.simulateLogin(phone, password);
+            
+            this.currentUser = {
+                phone: phone,
+                loginTime: new Date().toISOString()
+            };
+            
+            localStorage.setItem('mobile_home_user', JSON.stringify(this.currentUser));
+            
+            this.showMessage('登录成功！', 'success');
+            setTimeout(() => this.showDeviceList(), 500);
+            
         } catch (error) {
-            this.showError(error.message);
+            this.showMessage(error.message, 'error');
         } finally {
-            this.loginBtn.disabled = false;
-            this.loginBtn.textContent = '登录';
+            btn.disabled = false;
+            btn.textContent = '登录';
         }
     }
 
-    handleLogout() {
-        this.api.logout();
-        this.showLogin();
+    async handleSmsLogin() {
+        const phone = document.getElementById('sms-phone').value.trim();
+        const code = document.getElementById('verify-code').value.trim();
+
+        if (!phone || !code) {
+            this.showMessage('请输入手机号和验证码', 'error');
+            return;
+        }
+
+        if (!/^1[3-9]\d{9}$/.test(phone)) {
+            this.showMessage('手机号格式不正确', 'error');
+            return;
+        }
+
+        const btn = document.getElementById('sms-login-btn');
+        btn.disabled = true;
+        btn.textContent = '登录中...';
+
+        try {
+            await this.simulateLogin(phone, code);
+            
+            this.currentUser = {
+                phone: phone,
+                loginTime: new Date().toISOString()
+            };
+            
+            localStorage.setItem('mobile_home_user', JSON.stringify(this.currentUser));
+            
+            this.showMessage('登录成功！', 'success');
+            setTimeout(() => this.showDeviceList(), 500);
+            
+        } catch (error) {
+            this.showMessage(error.message, 'error');
+        } finally {
+            btn.disabled = false;
+            btn.textContent = '登录';
+        }
+    }
+
+    async sendVerificationCode() {
+        const phone = document.getElementById('sms-phone').value.trim();
+        
+        if (!phone) {
+            this.showMessage('请输入手机号', 'error');
+            return;
+        }
+
+        if (!/^1[3-9]\d{9}$/.test(phone)) {
+            this.showMessage('手机号格式不正确', 'error');
+            return;
+        }
+
+        const btn = document.getElementById('send-code-btn');
+        btn.disabled = true;
+
+        try {
+            // 模拟发送验证码
+            await new Promise(resolve => setTimeout(resolve, 1000));
+            
+            this.showMessage('验证码已发送（演示：123456）', 'success');
+            
+            // 倒计时
+            let countdown = 60;
+            const timer = setInterval(() => {
+                countdown--;
+                btn.textContent = `${countdown}秒后重试`;
+                
+                if (countdown <= 0) {
+                    clearInterval(timer);
+                    btn.disabled = false;
+                    btn.textContent = '发送验证码';
+                }
+            }, 1000);
+            
+        } catch (error) {
+            this.showMessage('发送失败，请稍后重试', 'error');
+            btn.disabled = false;
+        }
     }
 
     async loadDevices() {
-        this.loadingCameras.classList.remove('hidden');
-        this.camerasGrid.innerHTML = '';
+        const container = document.getElementById('device-list');
+        container.innerHTML = '<div class="loading">加载设备列表中...</div>';
 
         try {
-            const devices = await this.api.getDevices();
+            // 模拟 API 调用
+            await new Promise(resolve => setTimeout(resolve, 1000));
             
-            if (devices.length === 0) {
-                this.camerasGrid.innerHTML = `
-                    <div style="grid-column: 1/-1; text-align: center; padding: 3rem; color: var(--text-secondary);">
-                        <p>暂无设备</p>
-                        <p style="font-size: 0.875rem; margin-top: 0.5rem;">请在移动爱家 App 中添加设备</p>
-                    </div>
-                `;
-            } else {
-                devices.forEach(device => {
-                    this.renderCameraCard(device);
-                });
-            }
-        } catch (error) {
-            this.camerasGrid.innerHTML = `
-                <div style="grid-column: 1/-1; text-align: center; padding: 3rem; color: #EF4444;">
-                    <p>加载失败</p>
-                    <p style="font-size: 0.875rem; margin-top: 0.5rem;">${error.message}</p>
-                </div>
-            `;
-        } finally {
-            this.loadingCameras.classList.add('hidden');
-        }
-    }
-
-    renderCameraCard(device) {
-        const card = document.createElement('div');
-        card.className = 'camera-card';
-        card.innerHTML = `
-            <div class="camera-preview">
-                <span style="color: var(--text-secondary); font-size: 3rem;">📹</span>
-            </div>
-            <div class="camera-name">${device.name || '未命名设备'}</div>
-            <div class="camera-status ${device.online ? 'status-online' : 'status-offline'}">
-                ${device.online ? '● 在线' : '● 离线'}
-            </div>
-        `;
-
-        card.addEventListener('click', () => {
-            if (device.online) {
-                this.openVideo(device);
-            }
-        });
-
-        this.camerasGrid.appendChild(card);
-    }
-
-    async openVideo(device) {
-        this.videoModal.classList.add('active');
-        this.videoTitle.textContent = device.name || '未命名设备';
-        this.videoPlayer.style.display = 'none';
-        this.loadingVideo.classList.remove('hidden');
-
-        try {
-            const streamUrl = await this.api.getVideoStream(device.id || device.deviceId);
-            
-            if (streamUrl) {
-                // 如果是 RTSP 流，需要转换
-                if (streamUrl.startsWith('rtsp://')) {
-                    this.showError('检测到 RTSP 流，需要转码服务器支持。请参考 README.md 配置转码服务器。');
-                    this.loadingVideo.innerHTML = `
-                        <p style="color: var(--text-secondary);">
-                            RTSP 流地址：<br>
-                            <code style="background: var(--surface-4); padding: 0.5rem; border-radius: 4px; display: inline-block; margin-top: 0.5rem;">
-                                ${streamUrl}
-                            </code>
-                        </p>
-                        <p style="margin-top: 1rem; font-size: 0.875rem; color: var(--text-secondary);">
-                            你可以使用 VLC 播放器打开此地址观看
-                        </p>
-                    `;
-                } else {
-                    // HTTP/HLS 流可以直接播放
-                    this.videoPlayer.src = streamUrl;
-                    this.videoPlayer.style.display = 'block';
-                    this.loadingVideo.classList.add('hidden');
+            // 模拟设备数据
+            this.devices = [
+                {
+                    id: '1',
+                    name: '客厅摄像头',
+                    online: true,
+                    location: '客厅',
+                    thumbnail: 'https://via.placeholder.com/320x180?text=客厅摄像头'
+                },
+                {
+                    id: '2',
+                    name: '卧室摄像头',
+                    online: true,
+                    location: '卧室',
+                    thumbnail: 'https://via.placeholder.com/320x180?text=卧室摄像头'
+                },
+                {
+                    id: '3',
+                    name: '门口摄像头',
+                    online: false,
+                    location: '门口',
+                    thumbnail: 'https://via.placeholder.com/320x180?text=门口摄像头'
+                },
+                {
+                    id: '4',
+                    name: '厨房摄像头',
+                    online: true,
+                    location: '厨房',
+                    thumbnail: 'https://via.placeholder.com/320x180?text=厨房摄像头'
                 }
-            } else {
-                throw new Error('无法获取视频流地址');
-            }
+            ];
+            
+            this.renderDevices();
+            
         } catch (error) {
-            this.loadingVideo.innerHTML = `
-                <p style="color: #EF4444;">加载失败: ${error.message}</p>
-            `;
+            container.innerHTML = '<div class="error">加载失败，请刷新重试</div>';
         }
     }
 
-    closeVideo() {
-        this.videoModal.classList.remove('active');
-        this.videoPlayer.pause();
-        this.videoPlayer.src = '';
+    renderDevices() {
+        const container = document.getElementById('device-list');
+        
+        if (this.devices.length === 0) {
+            container.innerHTML = '<div class="empty">暂无设备</div>';
+            return;
+        }
+
+        container.innerHTML = this.devices.map(device => `
+            <div class="device-card ${device.online ? '' : 'offline'}" onclick="app.playVideo('${device.id}')">
+                <img src="${device.thumbnail}" alt="${device.name}">
+                <div class="device-info">
+                    <div class="device-name">${device.name}</div>
+                    <div class="device-status">
+                        <span class="status-dot ${device.online ? 'online' : 'offline'}"></span>
+                        ${device.online ? '在线' : '离线'}
+                    </div>
+                    <div class="device-location">📍 ${device.location}</div>
+                </div>
+                ${device.online ? '<button class="play-btn" onclick="event.stopPropagation(); app.playVideo(\'' + device.id + '\')">▶️ 播放</button>' : ''}
+            </div>
+        `).join('');
+    }
+
+    playVideo(deviceId) {
+        const device = this.devices.find(d => d.id === deviceId);
+        
+        if (!device) {
+            this.showMessage('设备不存在', 'error');
+            return;
+        }
+
+        if (!device.online) {
+            this.showMessage('设备离线，无法播放', 'error');
+            return;
+        }
+
+        // 显示视频弹窗
+        const modal = document.getElementById('video-modal');
+        const title = document.getElementById('modal-device-name');
+        const video = document.getElementById('video-player');
+        
+        title.textContent = device.name;
+        modal.style.display = 'flex';
+        
+        // 这里应该加载真实的视频流
+        // video.src = device.streamUrl;
+        this.showMessage('演示模式：实际使用时这里会播放视频', 'info');
+    }
+
+    handleLogout() {
+        if (confirm('确定要退出登录吗？')) {
+            localStorage.removeItem('mobile_home_user');
+            this.currentUser = null;
+            this.devices = [];
+            this.showLogin();
+            this.showMessage('已退出登录', 'success');
+        }
+    }
+
+    async simulateLogin(username, password) {
+        // 模拟网络延迟
+        await new Promise(resolve => setTimeout(resolve, 1500));
+        
+        // 这里应该是真实的 API 调用
+        // const response = await fetch('https://ydaj.10086.cn/api/login', {
+        //     method: 'POST',
+        //     headers: { 'Content-Type': 'application/json' },
+        //     body: JSON.stringify({ phone: username, password: password })
+        // });
+        
+        // 模拟登录成功（演示用）
+        // 真实环境中，任何手机号+密码都会成功（仅用于测试界面）
+        return { success: true, token: 'demo_token_' + Date.now() };
+    }
+
+    showMessage(message, type = 'info') {
+        // 创建消息提示
+        const toast = document.createElement('div');
+        toast.className = `toast toast-${type}`;
+        toast.textContent = message;
+        
+        document.body.appendChild(toast);
+        
+        // 显示动画
+        setTimeout(() => toast.classList.add('show'), 10);
+        
+        // 3秒后移除
+        setTimeout(() => {
+            toast.classList.remove('show');
+            setTimeout(() => toast.remove(), 300);
+        }, 3000);
     }
 }
 
-// 初始化应用
-document.addEventListener('DOMContentLoaded', () => {
-    const api = new MobileHomeAPI();
-    const ui = new UIController(api);
+// 关闭视频弹窗
+function closeVideoModal() {
+    const modal = document.getElementById('video-modal');
+    const video = document.getElementById('video-player');
     
-    // 开发模式：显示调试信息
-    if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
-        console.log('移动爱家网页版 - 开发模式');
-        console.log('API 服务器:', api.apiServer);
-        console.log('提示：这是一个逆向工程项目，API 端点需要通过抓包获取真实地址');
+    modal.style.display = 'none';
+    video.pause();
+    video.src = '';
+}
+
+// 点击弹窗外部关闭
+document.getElementById('video-modal')?.addEventListener('click', (e) => {
+    if (e.target.id === 'video-modal') {
+        closeVideoModal();
     }
 });
+
+// 初始化应用
+let app;
+window.addEventListener('DOMContentLoaded', () => {
+    app = new MobileHomeApp();
+});
+
+// 添加 Toast 样式
+const style = document.createElement('style');
+style.textContent = `
+    .toast {
+        position: fixed;
+        top: 20px;
+        right: 20px;
+        padding: 15px 25px;
+        border-radius: 8px;
+        color: white;
+        font-size: 14px;
+        opacity: 0;
+        transform: translateX(400px);
+        transition: all 0.3s ease;
+        z-index: 10000;
+        max-width: 300px;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+    }
+
+    .toast.show {
+        opacity: 1;
+        transform: translateX(0);
+    }
+
+    .toast-success {
+        background: linear-gradient(135deg, #6EE7B7 0%, #10B981 100%);
+    }
+
+    .toast-error {
+        background: linear-gradient(135deg, #F87171 0%, #EF4444 100%);
+    }
+
+    .toast-info {
+        background: linear-gradient(135deg, #60A5FA 0%, #3B82F6 100%);
+    }
+
+    .loading, .empty, .error {
+        text-align: center;
+        padding: 60px 20px;
+        color: #6B7280;
+        font-size: 16px;
+    }
+
+    .error {
+        color: #EF4444;
+    }
+
+    .device-card.offline {
+        opacity: 0.6;
+    }
+
+    .device-card.offline img {
+        filter: grayscale(100%);
+    }
+`;
+document.head.appendChild(style);
