@@ -1,0 +1,426 @@
+:root {
+    --surface-0: #05070C;
+    --surface-1: #0A0D12;
+    --surface-2: #0F131C;
+    --surface-3: #161D2B;
+    --surface-4: #1E2636;
+    --accent: #38BDF8;
+    --accent-hover: #0EA5E9;
+    --text-primary: #F8FAFC;
+    --text-secondary: #94A3B8;
+    --error: #EF4444;
+    --success: #10B981;
+    --warning: #F59E0B;
+}
+
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC', 'Hiragino Sans GB', sans-serif;
+    background: linear-gradient(135deg, var(--surface-0) 0%, var(--surface-2) 100%);
+    color: var(--text-primary);
+    min-height: 100vh;
+}
+
+.hidden {
+    display: none !important;
+}
+
+/* ==================== 登录页面 ==================== */
+.login-container {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 100vh;
+    padding: 2rem;
+}
+
+.login-card {
+    background: var(--surface-2);
+    border-radius: 16px;
+    padding: clamp(2rem, 5vw, 3rem);
+    width: 100%;
+    max-width: 420px;
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+}
+
+.logo {
+    font-size: clamp(2.5rem, 8vw, 4rem);
+    text-align: center;
+    margin-bottom: 1rem;
+}
+
+h1 {
+    font-size: clamp(1.75rem, 5vw, 2.25rem);
+    text-align: center;
+    margin-bottom: 0.5rem;
+    font-weight: 600;
+}
+
+.subtitle {
+    text-align: center;
+    color: var(--text-secondary);
+    font-size: clamp(0.875rem, 3vw, 1rem);
+    margin-bottom: 2rem;
+}
+
+.login-tabs {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 0.5rem;
+    margin-bottom: 2rem;
+    background: var(--surface-1);
+    padding: 0.25rem;
+    border-radius: 999px;
+}
+
+.tab-btn {
+    background: transparent;
+    border: none;
+    color: var(--text-secondary);
+    padding: 0.75rem;
+    border-radius: 999px;
+    cursor: pointer;
+    font-size: clamp(0.875rem, 3vw, 1rem);
+    font-weight: 500;
+    transition: all 0.2s;
+}
+
+.tab-btn.active {
+    background: var(--accent);
+    color: var(--surface-0);
+}
+
+.tab-btn:hover:not(.active) {
+    color: var(--text-primary);
+}
+
+.login-form {
+    display: none;
+}
+
+.login-form.active {
+    display: block;
+}
+
+.form-group {
+    margin-bottom: 1.5rem;
+}
+
+label {
+    display: block;
+    margin-bottom: 0.5rem;
+    font-size: clamp(0.875rem, 3vw, 1rem);
+    color: var(--text-secondary);
+}
+
+input[type="tel"],
+input[type="password"],
+input[type="text"] {
+    width: 100%;
+    padding: 0.875rem 1rem;
+    background: var(--surface-1);
+    border: 1px solid var(--surface-4);
+    border-radius: 12px;
+    color: var(--text-primary);
+    font-size: clamp(0.875rem, 3vw, 1rem);
+    transition: all 0.2s;
+}
+
+input:focus {
+    outline: none;
+    border-color: var(--accent);
+    box-shadow: 0 0 0 3px rgba(56, 189, 248, 0.1);
+}
+
+.code-input-group {
+    display: grid;
+    grid-template-columns: 1fr auto;
+    gap: 0.5rem;
+}
+
+.btn-get-code {
+    background: var(--surface-3);
+    border: 1px solid var(--surface-4);
+    color: var(--accent);
+    padding: 0 1.25rem;
+    border-radius: 12px;
+    cursor: pointer;
+    font-size: clamp(0.8125rem, 3vw, 0.9375rem);
+    font-weight: 500;
+    white-space: nowrap;
+    transition: all 0.2s;
+}
+
+.btn-get-code:hover:not(:disabled) {
+    background: var(--surface-4);
+}
+
+.btn-get-code:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+.btn-primary {
+    width: 100%;
+    padding: 1rem;
+    background: var(--accent);
+    border: none;
+    border-radius: 999px;
+    color: var(--surface-0);
+    font-size: clamp(1rem, 3vw, 1.125rem);
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s;
+    margin-top: 1rem;
+}
+
+.btn-primary:hover:not(:disabled) {
+    background: var(--accent-hover);
+    transform: translateY(-1px);
+}
+
+.btn-primary:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+}
+
+.error-message {
+    background: rgba(239, 68, 68, 0.1);
+    border: 1px solid var(--error);
+    color: var(--error);
+    padding: 0.875rem;
+    border-radius: 12px;
+    margin-top: 1rem;
+    font-size: clamp(0.8125rem, 3vw, 0.9375rem);
+}
+
+.warning-box {
+    background: rgba(245, 158, 11, 0.1);
+    border: 1px solid var(--warning);
+    color: var(--warning);
+    padding: 0.875rem;
+    border-radius: 12px;
+    margin-top: 1.5rem;
+    font-size: clamp(0.75rem, 3vw, 0.875rem);
+    line-height: 1.5;
+}
+
+/* ==================== 仪表盘 ==================== */
+.dashboard {
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+}
+
+.dashboard-header {
+    background: var(--surface-1);
+    border-bottom: 1px solid var(--surface-3);
+    padding: 1rem;
+    position: sticky;
+    top: 0;
+    z-index: 10;
+}
+
+.header-content {
+    max-width: 1400px;
+    margin: 0 auto;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.dashboard-header h2 {
+    font-size: clamp(1.25rem, 4vw, 1.5rem);
+    font-weight: 600;
+}
+
+.btn-logout {
+    background: var(--surface-3);
+    border: 1px solid var(--surface-4);
+    color: var(--text-secondary);
+    padding: 0.625rem 1.25rem;
+    border-radius: 999px;
+    cursor: pointer;
+    font-size: clamp(0.8125rem, 3vw, 0.9375rem);
+    transition: all 0.2s;
+}
+
+.btn-logout:hover {
+    color: var(--text-primary);
+    border-color: var(--accent);
+}
+
+.dashboard-main {
+    flex: 1;
+    padding: 2rem 1rem;
+    max-width: 1400px;
+    margin: 0 auto;
+    width: 100%;
+}
+
+.cameras-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(clamp(250px, 30vw, 320px), 1fr));
+    gap: clamp(1rem, 3vw, 1.5rem);
+}
+
+.camera-card {
+    background: var(--surface-2);
+    border: 1px solid var(--surface-3);
+    border-radius: 16px;
+    padding: 1.5rem;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.camera-card:hover {
+    border-color: var(--accent);
+    transform: translateY(-2px);
+    box-shadow: 0 8px 24px rgba(56, 189, 248, 0.1);
+}
+
+.camera-preview {
+    aspect-ratio: 16/9;
+    background: var(--surface-1);
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 1rem;
+}
+
+.camera-name {
+    font-size: clamp(1rem, 3vw, 1.125rem);
+    font-weight: 500;
+    margin-bottom: 0.5rem;
+}
+
+.camera-status {
+    font-size: clamp(0.8125rem, 3vw, 0.875rem);
+}
+
+.status-online {
+    color: var(--success);
+}
+
+.status-offline {
+    color: var(--text-secondary);
+}
+
+/* ==================== 视频弹窗 ==================== */
+.video-modal {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(5, 7, 12, 0.95);
+    z-index: 1000;
+    padding: 1rem;
+}
+
+.video-modal.active {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.video-modal-content {
+    background: var(--surface-2);
+    border-radius: 16px;
+    padding: 2rem;
+    width: 100%;
+    max-width: 1000px;
+    position: relative;
+}
+
+.btn-close {
+    position: absolute;
+    top: 1rem;
+    right: 1rem;
+    width: 40px;
+    height: 40px;
+    background: var(--surface-3);
+    border: none;
+    border-radius: 50%;
+    color: var(--text-primary);
+    font-size: 1.5rem;
+    cursor: pointer;
+    transition: all 0.2s;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.btn-close:hover {
+    background: var(--error);
+}
+
+.video-modal-content h3 {
+    font-size: clamp(1.25rem, 4vw, 1.5rem);
+    margin-bottom: 1rem;
+}
+
+.video-container {
+    position: relative;
+    aspect-ratio: 16/9;
+    background: var(--surface-0);
+    border-radius: 12px;
+    overflow: hidden;
+}
+
+.video-container video {
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+}
+
+/* ==================== 加载动画 ==================== */
+.loading {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 3rem;
+}
+
+.spinner {
+    width: 48px;
+    height: 48px;
+    border: 4px solid var(--surface-3);
+    border-top-color: var(--accent);
+    border-radius: 50%;
+    animation: spin 0.8s linear infinite;
+}
+
+@keyframes spin {
+    to { transform: rotate(360deg); }
+}
+
+.loading p {
+    margin-top: 1rem;
+    color: var(--text-secondary);
+    font-size: clamp(0.875rem, 3vw, 1rem);
+}
+
+/* ==================== 响应式 ==================== */
+@media (max-width: 640px) {
+    .cameras-grid {
+        grid-template-columns: 1fr;
+    }
+    
+    .header-content {
+        flex-direction: column;
+        gap: 1rem;
+    }
+    
+    .video-modal-content {
+        padding: 1.5rem;
+    }
+}

@@ -1,0 +1,40 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+env/
+venv/
+*.egg-info/
+
+# Node
+node_modules/
+npm-debug.log
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+logs/
+
+# 测试数据
+api_test_results.json
+test_results/
+
+# 敏感信息
+.env
+config.local.py
+*.pem
+*.key
+
+# mitmproxy
+~/.mitmproxy/
