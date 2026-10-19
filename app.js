@@ -30,45 +30,38 @@ class MobileHomeApp {
                 e.target.classList.add('active');
                 
                 const type = e.target.dataset.tab;
-                document.querySelectorAll('.tab-content').forEach(content => {
-                    content.classList.remove('active');
+                document.querySelectorAll('.login-form').forEach(form => {
+                    form.classList.remove('active');
                 });
-                document.getElementById(`${type}-tab`).classList.add('active');
+                
+                if (type === 'password') {
+                    document.getElementById('loginForm').classList.add('active');
+                } else {
+                    document.getElementById('smsLoginForm').classList.add('active');
+                }
             });
         });
 
-        // 密码登录
-        document.getElementById('password-login-btn')?.addEventListener('click', () => {
+        // 密码登录表单提交
+        document.getElementById('loginForm')?.addEventListener('submit', (e) => {
+            e.preventDefault();
             this.handlePasswordLogin();
         });
 
-        // 验证码登录
-        document.getElementById('sms-login-btn')?.addEventListener('click', () => {
+        // 验证码登录表单提交
+        document.getElementById('smsLoginForm')?.addEventListener('submit', (e) => {
+            e.preventDefault();
             this.handleSmsLogin();
         });
 
         // 发送验证码
-        document.getElementById('send-code-btn')?.addEventListener('click', () => {
+        document.getElementById('getSmsBtn')?.addEventListener('click', () => {
             this.sendVerificationCode();
         });
 
         // 退出登录
         document.getElementById('logout-btn')?.addEventListener('click', () => {
             this.handleLogout();
-        });
-
-        // 回车登录
-        document.querySelectorAll('input').forEach(input => {
-            input.addEventListener('keypress', (e) => {
-                if (e.key === 'Enter') {
-                    const activeTab = document.querySelector('.tab-content.active');
-                    if (activeTab.id === 'password-tab') {
-                        this.handlePasswordLogin();
-                    } else {
-                        this.handleSmsLogin();
-                    }
-                }
-            });
         });
     }
 
@@ -91,7 +84,7 @@ class MobileHomeApp {
     }
 
     async handlePasswordLogin() {
-        const phone = document.getElementById('phone').value.trim();
+        const phone = document.getElementById('username').value.trim();
         const password = document.getElementById('password').value.trim();
 
         if (!phone || !password) {
@@ -104,7 +97,8 @@ class MobileHomeApp {
             return;
         }
 
-        const btn = document.getElementById('password-login-btn');
+        const btn = document.getElementById('loginBtn');
+        const originalText = btn.textContent;
         btn.disabled = true;
         btn.textContent = '登录中...';
 
@@ -126,13 +120,13 @@ class MobileHomeApp {
             this.showMessage(error.message, 'error');
         } finally {
             btn.disabled = false;
-            btn.textContent = '登录';
+            btn.textContent = originalText;
         }
     }
 
     async handleSmsLogin() {
-        const phone = document.getElementById('sms-phone').value.trim();
-        const code = document.getElementById('verify-code').value.trim();
+        const phone = document.getElementById('smsPhone').value.trim();
+        const code = document.getElementById('smsCode').value.trim();
 
         if (!phone || !code) {
             this.showMessage('请输入手机号和验证码', 'error');
@@ -144,7 +138,8 @@ class MobileHomeApp {
             return;
         }
 
-        const btn = document.getElementById('sms-login-btn');
+        const btn = document.getElementById('smsLoginBtn');
+        const originalText = btn.textContent;
         btn.disabled = true;
         btn.textContent = '登录中...';
 
@@ -165,12 +160,12 @@ class MobileHomeApp {
             this.showMessage(error.message, 'error');
         } finally {
             btn.disabled = false;
-            btn.textContent = '登录';
+            btn.textContent = originalText;
         }
     }
 
     async sendVerificationCode() {
-        const phone = document.getElementById('sms-phone').value.trim();
+        const phone = document.getElementById('smsPhone').value.trim();
         
         if (!phone) {
             this.showMessage('请输入手机号', 'error');
@@ -182,14 +177,14 @@ class MobileHomeApp {
             return;
         }
 
-        const btn = document.getElementById('send-code-btn');
+        const btn = document.getElementById('getSmsBtn');
         btn.disabled = true;
 
         try {
             // 模拟发送验证码
             await new Promise(resolve => setTimeout(resolve, 1000));
             
-            this.showMessage('验证码已发送（演示：123456）', 'success');
+            this.showMessage('验证码已发送到您的手机（演示码：123456）', 'success');
             
             // 倒计时
             let countdown = 60;
@@ -200,7 +195,7 @@ class MobileHomeApp {
                 if (countdown <= 0) {
                     clearInterval(timer);
                     btn.disabled = false;
-                    btn.textContent = '发送验证码';
+                    btn.textContent = '获取验证码';
                 }
             }, 1000);
             

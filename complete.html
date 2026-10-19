@@ -1,0 +1,489 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>移动爱家 - 网页版</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+            background: #0A0D12;
+            color: white;
+            min-height: 100vh;
+        }
+        
+        /* 登录页面 */
+        .login-page {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+        }
+        .login-container {
+            background: #161D2B;
+            border-radius: 16px;
+            padding: 40px;
+            max-width: 400px;
+            width: 90%;
+        }
+        h1 { text-align: center; margin-bottom: 10px; font-size: 32px; }
+        .subtitle { text-align: center; color: #6B7280; margin-bottom: 30px; }
+        .tabs {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 30px;
+        }
+        .tab-btn {
+            flex: 1;
+            padding: 12px;
+            background: transparent;
+            border: 2px solid #1E2636;
+            color: #6B7280;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 16px;
+            transition: all 0.3s;
+        }
+        .tab-btn.active {
+            background: #38BDF8;
+            border-color: #38BDF8;
+            color: white;
+        }
+        .form { display: none; }
+        .form.active { display: block; }
+        .form-group { margin-bottom: 20px; }
+        label {
+            display: block;
+            margin-bottom: 8px;
+            color: #9CA3AF;
+            font-size: 14px;
+        }
+        input {
+            width: 100%;
+            padding: 12px;
+            background: #0F131C;
+            border: 2px solid #1E2636;
+            border-radius: 8px;
+            color: white;
+            font-size: 16px;
+        }
+        input:focus {
+            outline: none;
+            border-color: #38BDF8;
+        }
+        input:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+        .code-group {
+            display: flex;
+            gap: 10px;
+        }
+        .code-group input { flex: 1; }
+        .btn {
+            width: 100%;
+            padding: 14px;
+            border: none;
+            border-radius: 8px;
+            font-size: 16px;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        .btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+        .btn-primary {
+            background: linear-gradient(135deg, #38BDF8 0%, #3B82F6 100%);
+            color: white;
+        }
+        .btn-primary:hover:not(:disabled) { transform: translateY(-2px); }
+        .btn-code {
+            padding: 12px 20px;
+            background: #1E2636;
+            color: white;
+            white-space: nowrap;
+        }
+        
+        /* 设备列表页面 */
+        .device-page {
+            display: none;
+            padding: 20px;
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+        .device-page.active { display: block; }
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 30px;
+            padding: 20px;
+            background: #161D2B;
+            border-radius: 12px;
+        }
+        .header h2 { font-size: 24px; }
+        .user-info {
+            display: flex;
+            gap: 15px;
+            align-items: center;
+        }
+        .btn-logout {
+            padding: 8px 20px;
+            background: #1E2636;
+            border: none;
+            color: white;
+            border-radius: 6px;
+            cursor: pointer;
+        }
+        .btn-logout:hover { background: #2A3442; }
+        
+        .device-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: 20px;
+        }
+        .device-card {
+            background: #161D2B;
+            border-radius: 12px;
+            padding: 20px;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        .device-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 30px rgba(56, 189, 248, 0.2);
+        }
+        .device-icon {
+            font-size: 48px;
+            text-align: center;
+            margin-bottom: 15px;
+        }
+        .device-name {
+            font-size: 18px;
+            font-weight: bold;
+            margin-bottom: 8px;
+        }
+        .device-status {
+            color: #6EE7B7;
+            font-size: 14px;
+        }
+        .device-status.offline {
+            color: #F87171;
+        }
+        
+        /* 视频弹窗 */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.9);
+            z-index: 1000;
+            justify-content: center;
+            align-items: center;
+        }
+        .modal.active { display: flex; }
+        .modal-content {
+            background: #161D2B;
+            border-radius: 16px;
+            padding: 30px;
+            max-width: 90%;
+            max-height: 90%;
+            width: 800px;
+        }
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+        .close-btn {
+            background: none;
+            border: none;
+            color: white;
+            font-size: 32px;
+            cursor: pointer;
+            line-height: 1;
+        }
+        .video-container {
+            background: #0F131C;
+            border-radius: 12px;
+            padding: 20px;
+            text-align: center;
+        }
+        .video-placeholder {
+            width: 100%;
+            height: 400px;
+            background: #1E2636;
+            border-radius: 8px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            gap: 20px;
+        }
+        .video-placeholder .icon { font-size: 64px; }
+        .video-placeholder .text {
+            color: #6B7280;
+            font-size: 16px;
+        }
+        
+        .toast {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            padding: 15px 25px;
+            border-radius: 8px;
+            color: white;
+            font-size: 14px;
+            opacity: 0;
+            transform: translateX(400px);
+            transition: all 0.3s;
+            z-index: 2000;
+        }
+        .toast.show { opacity: 1; transform: translateX(0); }
+        .toast.success { background: linear-gradient(135deg, #6EE7B7 0%, #10B981 100%); }
+        .toast.error { background: linear-gradient(135deg, #F87171 0%, #EF4444 100%); }
+        
+        .hidden { display: none !important; }
+    </style>
+</head>
+<body>
+    <!-- 登录页面 -->
+    <div id="loginPage" class="login-page">
+        <div class="login-container">
+            <h1>🏠 移动爱家</h1>
+            <p class="subtitle">网页版监控</p>
+            
+            <div class="tabs">
+                <button class="tab-btn active" onclick="switchTab('password')">密码登录</button>
+                <button class="tab-btn" onclick="switchTab('sms')">验证码登录</button>
+            </div>
+            
+            <!-- 密码登录 -->
+            <div id="password-form" class="form active">
+                <div class="form-group">
+                    <label>手机号</label>
+                    <input type="tel" id="pwd-phone" placeholder="请输入手机号" maxlength="11">
+                </div>
+                <div class="form-group">
+                    <label>密码</label>
+                    <input type="password" id="pwd-password" placeholder="请输入密码">
+                </div>
+                <button class="btn btn-primary" onclick="loginWithPassword()">登录</button>
+            </div>
+            
+            <!-- 验证码登录 -->
+            <div id="sms-form" class="form">
+                <div class="form-group">
+                    <label>手机号</label>
+                    <input type="tel" id="sms-phone" placeholder="请输入手机号" maxlength="11">
+                </div>
+                <div class="form-group">
+                    <label>验证码</label>
+                    <div class="code-group">
+                        <input type="text" id="sms-code" placeholder="请输入验证码（演示码：123456）" maxlength="6">
+                        <button class="btn btn-code" id="get-code-btn" onclick="getCode()">获取验证码</button>
+                    </div>
+                </div>
+                <button class="btn btn-primary" onclick="loginWithSms()">登录</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 设备列表页面 -->
+    <div id="devicePage" class="device-page">
+        <div class="header">
+            <h2>📹 我的监控设备</h2>
+            <div class="user-info">
+                <span id="user-phone-display"></span>
+                <button class="btn-logout" onclick="logout()">退出登录</button>
+            </div>
+        </div>
+        
+        <div id="deviceGrid" class="device-grid">
+            <!-- 设备卡片会动态生成 -->
+        </div>
+    </div>
+
+    <!-- 视频播放弹窗 -->
+    <div id="videoModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 id="modal-device-name">设备名称</h2>
+                <button class="close-btn" onclick="closeVideo()">×</button>
+            </div>
+            <div class="video-container">
+                <div class="video-placeholder">
+                    <div class="icon">📹</div>
+                    <div class="text">正在加载视频流...<br>（演示版本，实际使用时会显示真实画面）</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // 模拟设备数据
+        const mockDevices = [
+            { id: 1, name: '客厅摄像头', status: 'online', icon: '📹' },
+            { id: 2, name: '卧室摄像头', status: 'online', icon: '🎥' },
+            { id: 3, name: '门口摄像头', status: 'online', icon: '📸' },
+            { id: 4, name: '后院摄像头', status: 'offline', icon: '📷' }
+        ];
+
+        let currentUser = null;
+
+        function switchTab(tab) {
+            document.querySelectorAll('.tab-btn').forEach(btn => {
+                btn.classList.remove('active');
+            });
+            event.target.classList.add('active');
+            
+            document.querySelectorAll('.form').forEach(form => {
+                form.classList.remove('active');
+            });
+            document.getElementById(tab + '-form').classList.add('active');
+        }
+
+        function showToast(message, type) {
+            const toast = document.createElement('div');
+            toast.className = `toast ${type}`;
+            toast.textContent = message;
+            document.body.appendChild(toast);
+            
+            setTimeout(() => toast.classList.add('show'), 10);
+            setTimeout(() => {
+                toast.classList.remove('show');
+                setTimeout(() => toast.remove(), 300);
+            }, 3000);
+        }
+
+        function loginWithPassword() {
+            const phone = document.getElementById('pwd-phone').value;
+            const password = document.getElementById('pwd-password').value;
+            
+            if (!phone || !password) {
+                showToast('请输入手机号和密码', 'error');
+                return;
+            }
+            
+            if (!/^1[3-9]\d{9}$/.test(phone)) {
+                showToast('请输入正确的手机号', 'error');
+                return;
+            }
+            
+            showToast('登录成功！', 'success');
+            currentUser = phone;
+            
+            setTimeout(() => {
+                showDeviceList();
+            }, 1000);
+        }
+
+        function getCode() {
+            const phone = document.getElementById('sms-phone').value;
+            
+            if (!phone) {
+                showToast('请先输入手机号', 'error');
+                return;
+            }
+            
+            if (!/^1[3-9]\d{9}$/.test(phone)) {
+                showToast('请输入正确的手机号', 'error');
+                return;
+            }
+            
+            const btn = document.getElementById('get-code-btn');
+            btn.disabled = true;
+            
+            showToast('验证码已发送（演示码：123456）', 'success');
+            
+            let countdown = 60;
+            const timer = setInterval(() => {
+                countdown--;
+                btn.textContent = countdown + '秒后重试';
+                
+                if (countdown <= 0) {
+                    clearInterval(timer);
+                    btn.disabled = false;
+                    btn.textContent = '获取验证码';
+                }
+            }, 1000);
+        }
+
+        function loginWithSms() {
+            const phone = document.getElementById('sms-phone').value;
+            const code = document.getElementById('sms-code').value;
+            
+            if (!phone || !code) {
+                showToast('请输入手机号和验证码', 'error');
+                return;
+            }
+            
+            if (!/^1[3-9]\d{9}$/.test(phone)) {
+                showToast('请输入正确的手机号', 'error');
+                return;
+            }
+            
+            if (code !== '123456') {
+                showToast('验证码错误', 'error');
+                return;
+            }
+            
+            showToast('登录成功！', 'success');
+            currentUser = phone;
+            
+            setTimeout(() => {
+                showDeviceList();
+            }, 1000);
+        }
+
+        function showDeviceList() {
+            document.getElementById('loginPage').classList.add('hidden');
+            document.getElementById('devicePage').classList.add('active');
+            document.getElementById('user-phone-display').textContent = currentUser;
+            
+            // 渲染设备列表
+            const grid = document.getElementById('deviceGrid');
+            grid.innerHTML = mockDevices.map(device => `
+                <div class="device-card" onclick="openVideo('${device.name}', ${device.id})">
+                    <div class="device-icon">${device.icon}</div>
+                    <div class="device-name">${device.name}</div>
+                    <div class="device-status ${device.status === 'offline' ? 'offline' : ''}">
+                        ${device.status === 'online' ? '● 在线' : '● 离线'}
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function openVideo(deviceName, deviceId) {
+            document.getElementById('modal-device-name').textContent = deviceName;
+            document.getElementById('videoModal').classList.add('active');
+        }
+
+        function closeVideo() {
+            document.getElementById('videoModal').classList.remove('active');
+        }
+
+        function logout() {
+            if (confirm('确定要退出登录吗？')) {
+                currentUser = null;
+                document.getElementById('devicePage').classList.remove('active');
+                document.getElementById('loginPage').classList.remove('hidden');
+                
+                // 清空输入框
+                document.getElementById('pwd-phone').value = '';
+                document.getElementById('pwd-password').value = '';
+                document.getElementById('sms-phone').value = '';
+                document.getElementById('sms-code').value = '';
+                
+                showToast('已退出登录', 'success');
+            }
+        }
+    </script>
+</body>
+</html>

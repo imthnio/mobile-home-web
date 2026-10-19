@@ -1,0 +1,238 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>移动爱家测试版</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+            background: #0A0D12;
+            color: white;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+        }
+        .container {
+            background: #161D2B;
+            border-radius: 16px;
+            padding: 40px;
+            max-width: 400px;
+            width: 90%;
+        }
+        h1 { text-align: center; margin-bottom: 10px; }
+        .subtitle { text-align: center; color: #6B7280; margin-bottom: 30px; }
+        .tabs {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 30px;
+        }
+        .tab-btn {
+            flex: 1;
+            padding: 12px;
+            background: transparent;
+            border: 2px solid #1E2636;
+            color: #6B7280;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 16px;
+            transition: all 0.3s;
+        }
+        .tab-btn.active {
+            background: #38BDF8;
+            border-color: #38BDF8;
+            color: white;
+        }
+        .form { display: none; }
+        .form.active { display: block; }
+        .form-group { margin-bottom: 20px; }
+        label {
+            display: block;
+            margin-bottom: 8px;
+            color: #9CA3AF;
+            font-size: 14px;
+        }
+        input {
+            width: 100%;
+            padding: 12px;
+            background: #0F131C;
+            border: 2px solid #1E2636;
+            border-radius: 8px;
+            color: white;
+            font-size: 16px;
+        }
+        input:focus {
+            outline: none;
+            border-color: #38BDF8;
+        }
+        .code-group {
+            display: flex;
+            gap: 10px;
+        }
+        .code-group input { flex: 1; }
+        .btn {
+            width: 100%;
+            padding: 14px;
+            border: none;
+            border-radius: 8px;
+            font-size: 16px;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        .btn-primary {
+            background: linear-gradient(135deg, #38BDF8 0%, #3B82F6 100%);
+            color: white;
+        }
+        .btn-primary:hover { transform: translateY(-2px); }
+        .btn-code {
+            padding: 12px 20px;
+            background: #1E2636;
+            color: white;
+            white-space: nowrap;
+        }
+        .toast {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            padding: 15px 25px;
+            border-radius: 8px;
+            color: white;
+            font-size: 14px;
+            opacity: 0;
+            transform: translateX(400px);
+            transition: all 0.3s;
+            z-index: 1000;
+        }
+        .toast.show { opacity: 1; transform: translateX(0); }
+        .toast.success { background: linear-gradient(135deg, #6EE7B7 0%, #10B981 100%); }
+        .toast.error { background: linear-gradient(135deg, #F87171 0%, #EF4444 100%); }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🏠 移动爱家</h1>
+        <p class="subtitle">网页版监控</p>
+        
+        <div class="tabs">
+            <button class="tab-btn active" onclick="switchTab('password')">密码登录</button>
+            <button class="tab-btn" onclick="switchTab('sms')">验证码登录</button>
+        </div>
+        
+        <!-- 密码登录 -->
+        <div id="password-form" class="form active">
+            <div class="form-group">
+                <label>手机号</label>
+                <input type="tel" id="pwd-phone" placeholder="请输入手机号" maxlength="11">
+            </div>
+            <div class="form-group">
+                <label>密码</label>
+                <input type="password" id="pwd-password" placeholder="请输入密码">
+            </div>
+            <button class="btn btn-primary" onclick="loginWithPassword()">登录</button>
+        </div>
+        
+        <!-- 验证码登录 -->
+        <div id="sms-form" class="form">
+            <div class="form-group">
+                <label>手机号</label>
+                <input type="tel" id="sms-phone" placeholder="请输入手机号" maxlength="11">
+            </div>
+            <div class="form-group">
+                <label>验证码</label>
+                <div class="code-group">
+                    <input type="text" id="sms-code" placeholder="请输入验证码（演示码：123456）" maxlength="6" autocomplete="off">
+                    <button class="btn btn-code" id="get-code-btn" onclick="getCode()">获取验证码</button>
+                </div>
+            </div>
+            <button class="btn btn-primary" onclick="loginWithSms()">登录</button>
+        </div>
+    </div>
+
+    <script>
+        function switchTab(tab) {
+            // 切换按钮状态
+            document.querySelectorAll('.tab-btn').forEach(btn => {
+                btn.classList.remove('active');
+            });
+            event.target.classList.add('active');
+            
+            // 切换表单
+            document.querySelectorAll('.form').forEach(form => {
+                form.classList.remove('active');
+            });
+            document.getElementById(tab + '-form').classList.add('active');
+        }
+
+        function showToast(message, type) {
+            const toast = document.createElement('div');
+            toast.className = `toast ${type}`;
+            toast.textContent = message;
+            document.body.appendChild(toast);
+            
+            setTimeout(() => toast.classList.add('show'), 10);
+            setTimeout(() => {
+                toast.classList.remove('show');
+                setTimeout(() => toast.remove(), 300);
+            }, 3000);
+        }
+
+        function loginWithPassword() {
+            const phone = document.getElementById('pwd-phone').value;
+            const password = document.getElementById('pwd-password').value;
+            
+            if (!phone || !password) {
+                showToast('请输入手机号和密码', 'error');
+                return;
+            }
+            
+            showToast('登录成功！', 'success');
+            setTimeout(() => {
+                alert('密码登录成功！\n\n手机号：' + phone + '\n\n现在会跳转到设备列表页面');
+            }, 500);
+        }
+
+        function getCode() {
+            const phone = document.getElementById('sms-phone').value;
+            
+            if (!phone) {
+                showToast('请先输入手机号', 'error');
+                return;
+            }
+            
+            const btn = document.getElementById('get-code-btn');
+            btn.disabled = true;
+            
+            showToast('验证码已发送（演示码：123456）', 'success');
+            
+            let countdown = 60;
+            const timer = setInterval(() => {
+                countdown--;
+                btn.textContent = countdown + '秒后重试';
+                
+                if (countdown <= 0) {
+                    clearInterval(timer);
+                    btn.disabled = false;
+                    btn.textContent = '获取验证码';
+                }
+            }, 1000);
+        }
+
+        function loginWithSms() {
+            const phone = document.getElementById('sms-phone').value;
+            const code = document.getElementById('sms-code').value;
+            
+            if (!phone || !code) {
+                showToast('请输入手机号和验证码', 'error');
+                return;
+            }
+            
+            showToast('登录成功！', 'success');
+            setTimeout(() => {
+                alert('验证码登录成功！\n\n手机号：' + phone + '\n验证码：' + code + '\n\n现在会跳转到设备列表页面');
+            }, 500);
+        }
+    </script>
+</body>
+</html>

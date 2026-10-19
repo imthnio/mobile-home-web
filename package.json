@@ -1,0 +1,13 @@
+{
+  "name": "mobile-home-api-test",
+  "version": "1.0.0",
+  "description": "移动爱家API测试工具",
+  "main": "test-api.js",
+  "scripts": {
+    "test": "node test-api.js"
+  },
+  "dependencies": {
+    "axios": "^1.6.0",
+    "crypto": "^1.0.1"
+  }
+}
